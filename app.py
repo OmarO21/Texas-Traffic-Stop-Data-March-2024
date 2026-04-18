@@ -2,9 +2,9 @@ import streamlit as st
 import plotly.express as px
 from utils import load_data, load_geojson, build_county_summary
 
-st.set_page_config(page_title="Texas Traffic Stops Dashboard - March 2024", layout="wide")
+st.set_page_config(page_title="Texas Traffic Stops Dashboard", layout="wide")
 
-st.title("Texas Traffic Stops Dashboard")
+st.title("Texas Traffic Stops Dashboard - March 2024")
 
 df = load_data()
 df = df[df["Region_Label"] != "Unknown"].copy()
