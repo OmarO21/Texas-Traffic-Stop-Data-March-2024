@@ -63,7 +63,7 @@ CUSTOM_REGIONS = {
     ],
     "Coastal Bend": [
         "Nueces", "Victoria", "San Patricio", "Jim Wells", "Bee", "Kleberg",
-        "Aransas", "Lavaca", "DeWitt", "Gonzales", "Calhoun", "Jackson",
+        "Aransas", "Lavaca", "De Witt", "Gonzales", "Calhoun", "Jackson",
         "Live Oak", "Duval", "Goliad", "Brooks", "Refugio", "McMullen", "Kenedy"
     ],
     "South Texas Border": [
@@ -90,6 +90,19 @@ def load_data():
 
     if "County" in df.columns:
         df["County"] = df["County"].astype(str).str.strip().str.title()
+
+        county_name_fixes = {
+            "Dewitt": "De Witt",
+            "Dewit": "De Witt",
+            "De Witt": "De Witt",
+            "Dewitt County": "De Witt",
+            "DeWitt": "De Witt",
+            "Mcculloch": "McCulloch",
+            "Mclennan": "McLennan",
+            "Mcmullen": "McMullen"
+        }
+
+        df["County"] = df["County"].replace(county_name_fixes)
 
     if "Datetime" in df.columns:
         df["Datetime"] = pd.to_datetime(df["Datetime"], errors="coerce")
