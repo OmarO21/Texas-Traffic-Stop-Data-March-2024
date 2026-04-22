@@ -308,8 +308,104 @@ st.dataframe(
     county_summary_display
     .sort_values("Total Stops", ascending=False)
     .reset_index(drop=True)
+    .assign(Rank=lambda x: x.index + 1)
+    .set_index("Rank")
+    .rename_axis(None)
     .style
-    .hide(axis="index")
+    .format({
+        "Total Stops": "{:,}",
+        "Searches": "{:,}",
+        "Contraband Found": "{:,}",
+        "Search Rate": "{:.2%}",
+        "Contraband Rate": "{:.2%}",
+        "% of Overall Stops": "{:.2%}"
+    }),
+    use_container_width=True
+)
+
+st.divider()
+
+# Region summary table
+st.subheader(f"Region Summary{title_suffix}")
+
+region_summary = (
+    filtered_df.groupby("Region_Label")
+    .agg(
+        total_stops=("County", "size"),
+        searched_count=("searched_flag", "sum"),
+        contraband_count=("contraband_flag", "sum")
+    )
+    .reset_index()
+)
+
+region_summary["search_rate"] = (
+    region_summary["searched_count"] / region_summary["total_stops"]
+)
+
+region_summary["contraband_rate"] = (
+    region_summary["contraband_count"] / region_summary["total_stops"]
+)
+
+region_summary["pct_overall_stops"] = (
+    region_summary["total_stops"] / statewide_total_stops
+    if statewide_total_stops else 0
+)
+
+# Find top and bottom counties within each region
+region_county_totals = (
+    filtered_df.groupby(["Region_Label", "County"])
+    .size()
+    .reset_index(name="county_total_stops")
+)
+
+top_counties_by_region = (
+    region_county_totals.sort_values(
+        ["Region_Label", "county_total_stops", "County"],
+        ascending=[True, False, True]
+    )
+    .groupby("Region_Label")
+    .first()
+    .reset_index()[["Region_Label", "County"]]
+    .rename(columns={"County": "Top County"})
+)
+
+bottom_counties_by_region = (
+    region_county_totals.sort_values(
+        ["Region_Label", "county_total_stops", "County"],
+        ascending=[True, True, True]
+    )
+    .groupby("Region_Label")
+    .first()
+    .reset_index()[["Region_Label", "County"]]
+    .rename(columns={"County": "Bottom County"})
+)
+
+region_summary = (
+    region_summary
+    .merge(top_counties_by_region, on="Region_Label", how="left")
+    .merge(bottom_counties_by_region, on="Region_Label", how="left")
+)
+
+region_summary_display = region_summary.rename(
+    columns={
+        "Region_Label": "Region",
+        "total_stops": "Total Stops",
+        "searched_count": "Searches",
+        "contraband_count": "Contraband Found",
+        "search_rate": "Search Rate",
+        "contraband_rate": "Contraband Rate",
+        "pct_overall_stops": "% of Overall Stops"
+    }
+)
+
+st.dataframe(
+    region_summary_display
+    .sort_values("Total Stops", ascending=False)
+    .reset_index(drop=True)
+    .assign(Rank=lambda x: x.index + 1)
+    .set_index("Rank")
+    .rename_axis(None)
+    .style
     .format({
         "Total Stops": "{:,}",
         "Searches": "{:,}",
